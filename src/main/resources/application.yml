@@ -1,0 +1,22 @@
+server:
+  port: 80
+
+catfeeder:
+  hardware:
+    hx711:
+      pins:
+        DT: GPIO 8
+        CLCK: GPIO 9
+      gain: GAIN_128
+      defaultReadsCount: 10
+      defaultCalibrationFactor: 1123
+    feederStepper:
+      sleepBetweenSteps: 300
+      stepsPerRevolution: 200
+      microSteps: 8
+      pins:
+        EN: GPIO 3
+        DIR: GPIO 0
+        STEP: GPIO 2
+    encoder:
+      pin: GPIO 12
