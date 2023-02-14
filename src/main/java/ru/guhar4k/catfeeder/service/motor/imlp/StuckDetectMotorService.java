@@ -21,14 +21,21 @@ public class StuckDetectMotorService extends AbstractMotorService {
 
     private final GpioPinDigitalInput encoderPin;
 
-    public StuckDetectMotorService(String encoderPinName, String enablePinName, String dirPinName, String stepPinName, int stepsPerRevolution, int microSteps, int sleepBetweenSteps) {
-        super(enablePinName, dirPinName, stepPinName, stepsPerRevolution, microSteps, sleepBetweenSteps);
+    /**
+     * Сервис управления шаговым двигателем с поддержкой обратной связи от энкодера
+     *
+     * @param name               название (назначение) сервиса управления шаговым двигателем
+     * @param motorDriver        драйвер управления шаговым двигателем
+     * @param stepsPerRevolution количество шагов на полный оборот (по спецификации ШД)
+     */
+    public StuckDetectMotorService(String name, MotorDriver motorDriver, int stepsPerRevolution, String encoderPinName) {
+        super(name, motorDriver, stepsPerRevolution);
         this.encoderPin = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.getPinByName(encoderPinName));
     }
 
     @Override
     protected void makeSteps(Direction direction, long steps, boolean hold) throws MotorStuckException {
-        enableAndSetDirection(direction);
+        holdAndSetDirection(direction);
 
         boolean currentEncoderState, previousEncoderState = encoderPin.isHigh();
         int encoderHighStatesCount = 0, stepsBetweenEdges = 0;
@@ -46,17 +53,12 @@ public class StuckDetectMotorService extends AbstractMotorService {
             if (stepsBetweenEdges - AVERAGE_EDGE_TO_EDGE_STEPS > STEP_LOSS_TOLERANCE) {
                 log.info("Двигатель заклинило в направлении {}!", direction);
                 disableMotorIfRequired(hold);
-                throw new MotorStuckException(String.format("Двигатель заклининло в направлении %s", direction), i);
+                throw new MotorStuckException(String.format("Двигатель заклинило в направлении %s", direction), i);
             }
 
             currentEncoderState = encoderPin.isHigh();
 
             if (!previousEncoderState && currentEncoderState) {
-//                if (encoderHighStatesCount > 1 && stepsBetweenEdges < AVERAGE_EDGE_TO_EDGE_STEPS - STEP_LOSS_TOLERANCE) {
-//                    log.info("Двигатель заклинило в направлении {}!", direction);
-//                    throw new MotorStuckException(String.format("Двигатель заклининло в направлении %s", direction), i);
-//                }
-
                 encoderHighStatesCount++;
 
                 log.info("Точка {}, шагов с предыдущей точки: {}", encoderHighStatesCount, stepsBetweenEdges);
@@ -67,16 +69,5 @@ public class StuckDetectMotorService extends AbstractMotorService {
         }
 
         disableMotorIfRequired(hold);
-    }
-
-    @Override
-    public void shake(int stepsForward, int stepsBackward) {
-        for (int i = 0; i < stepsForward; i++) {
-            singleStep(Direction.CLOCKWISE, true);
-        }
-
-        for (int i = 0; i < stepsBackward; i++) {
-            singleStep(Direction.COUNTERCLOCKWISE, true);
-        }
     }
 }

@@ -2,7 +2,15 @@ package ru.guhar4k.catfeeder.service.motor;
 
 import ru.guhar4k.catfeeder.model.enumeration.Direction;
 
+/**
+ * Сервис работы с шаговым двигателем
+ */
 public interface MotorService {
+
+    /**
+     * Возвращает наименование (назначение) двигателя
+     */
+    String getName();
 
     /**
      * Вращение с указанием количества оборотов
@@ -14,8 +22,9 @@ public interface MotorService {
     void makeRevolution(Direction direction, double revolutionsCount, boolean hold);
 
     /**
-     * Параметризированная операция "вибрации" двигателем. Освобождение от заклинивания.
-     * @param stepsForward количество шагов в прямом направлении
+     * Параметризированная операция "вибрации" двигателем
+     *
+     * @param stepsForward  количество шагов в прямом направлении
      * @param stepsBackward количество шагов в обратном направлении
      */
     void shake(int stepsForward, int stepsBackward);
