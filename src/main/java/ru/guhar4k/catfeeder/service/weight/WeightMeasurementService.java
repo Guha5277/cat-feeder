@@ -12,11 +12,11 @@ public interface WeightMeasurementService {
 
     /**
      * Метод измерения веса
-     * @param messaruesCount количество замеров значения веса
+     * @param measuresCount количество замеров значения веса
      * @param calibrationFactor калибровочное значение, уникальное для каждого датчика
      * @return DTO значения веса и параметров замера
      */
-    WeightDTO getWeight(Integer messaruesCount, Integer calibrationFactor);
+    WeightDTO getWeight(Integer measuresCount, Integer calibrationFactor);
 
     /**
      * Обнуление значения веса

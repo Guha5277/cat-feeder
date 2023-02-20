@@ -1,9 +1,8 @@
 package ru.guhar4k.catfeeder.service.feeder.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.guhar4k.catfeeder.model.dto.FeedResultDTO;
 import ru.guhar4k.catfeeder.model.enumeration.Direction;
@@ -16,17 +15,23 @@ import static ru.guhar4k.catfeeder.utils.Utils.sleepSecond;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
+
 public class FeederServiceImpl implements FeedService {
     public final static double INIT_REVOLUTIONS_COUNT = 0.5;
     private final MotorService motorService;
     private final WeightMeasurementService weightMeasurementService;
 
+    @Autowired
+    public FeederServiceImpl(@Qualifier("stuckDetectMotorService") MotorService motorService, WeightMeasurementService weightMeasurementService) {
+        this.motorService = motorService;
+        this.weightMeasurementService = weightMeasurementService;
+    }
+
     @Override
     public FeedResultDTO feed(int requiredAmount) {
         log.info("Инициализирован процесс подачи корма");
 
-        double previousAmount, resultAmount = 0;
+        double resultAmount = 0;
         FeedResultDTO result = new FeedResultDTO();
         result.setRequiredAmount(requiredAmount);
         long start = System.currentTimeMillis();
@@ -74,33 +79,4 @@ public class FeederServiceImpl implements FeedService {
         result.setResultAmount(resultAmount);
         return result;
     }
-
-//    @Override
-//    public ResponseEntity<String> rotateForward(int count) {
-//        boolean success = true;
-//
-//        try {
-//            motorService.makeRevolution(Direction.CLOCKWISE, count, true);
-//            log.info("Сделано {} оборотов", count);
-//        } catch (MotorStuckException e) {
-//            try {
-//                log.info("Мотор застрял, вращаем в обратном направлении");
-//                sleepSecond(1);
-//                motorService.makeRevolution(Direction.COUNTERCLOCKWISE, count / 2, true);
-//            } catch (MotorStuckException e2) {
-//                success = false;
-//                log.info("Мотор застрял в обратном направлении");
-//            }
-//        }
-//
-//        return new ResponseEntity<>(success ? "Операция провеедена успешно" : "Мотор заклинило в обоих направлениях", success ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
-//    }
-//
-//    @Override
-//    public ResponseEntity<String> shakeTest(int shakes, int stepsForward, int stepsBackward) {
-//        for (int i = 0; i < shakes; i++) {
-//            motorService.shake(stepsForward, stepsBackward);
-//        }
-//        return new ResponseEntity<>("Готово", HttpStatus.OK);
-//    }
 }

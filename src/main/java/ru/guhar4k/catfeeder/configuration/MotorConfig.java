@@ -18,7 +18,7 @@ public class MotorConfig {
 
     private final MotorRegistryService motorRegistryService;
 
-    @Bean(name = "feederMotoDriver")
+    @Bean(name = "feederMotorDriver")
     public MotorDriver feederMotoDriver(@Value("${catfeeder.hardware.feederStepper.pins.EN}") String enablePinName,
                                         @Value("${catfeeder.hardware.feederStepper.pins.DIR}") String dirPinName,
                                         @Value("${catfeeder.hardware.feederStepper.pins.STEP}") String stepPinName,
@@ -28,21 +28,21 @@ public class MotorConfig {
     }
 
 
-    @Bean
-    public MotorService stuckDetectMotorService(@Autowired @Qualifier("feederMotoDriver") MotorDriver motorDriver,
+    @Bean("stuckDetectMotorService")
+    public MotorService stuckDetectMotorService(@Autowired @Qualifier("feederMotorDriver") MotorDriver motorDriver,
                                                 @Value("${catfeeder.hardware.encoder.pin}") String encoderPinName,
                                                 @Value("${catfeeder.hardware.feederStepper.stepsPerRevolution}") int stepsPerRevolution) {
 
-        var motorService = new StuckDetectMotorService("Шаговый двигатель фидера", motorDriver, stepsPerRevolution, encoderPinName);
+        var motorService = new StuckDetectMotorService("Сервис с обратной связью энкодера", motorDriver, stepsPerRevolution, encoderPinName);
         motorRegistryService.registerMotorService(motorService);
         return motorService;
     }
 
     @Bean
-    public SimpleMotorService simpleMotorService(@Autowired @Qualifier("feederMotoDriver") MotorDriver motorDriver,
+    public SimpleMotorService simpleMotorService(@Autowired @Qualifier("feederMotorDriver") MotorDriver motorDriver,
                                                  @Value("${catfeeder.hardware.feederStepper.stepsPerRevolution}") int stepsPerRevolution) {
 
-        var motorService = new SimpleMotorService("Шаговый двигатель фидера", motorDriver, stepsPerRevolution);
+        var motorService = new SimpleMotorService("Простой сервис управления ШД", motorDriver, stepsPerRevolution);
         motorRegistryService.registerMotorService(motorService);
         return motorService;
     }
