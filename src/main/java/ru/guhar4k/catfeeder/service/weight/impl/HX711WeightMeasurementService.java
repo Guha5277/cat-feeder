@@ -16,7 +16,8 @@ import static ru.guhar4k.catfeeder.utils.Utils.sleepMicro;
 
 @Slf4j
 @Service
-public class WeightMeasurementServiceImpl implements WeightMeasurementService {
+public class HX711WeightMeasurementService implements WeightMeasurementService {
+    public static final int CLOCK_PULSE_COUNT_FOR_READ_VALUE = 24;
     private final GpioPinDigitalInput dataPin;
     private final GpioPinDigitalOutput clockPin;
     private final Gain gain;
@@ -25,11 +26,19 @@ public class WeightMeasurementServiceImpl implements WeightMeasurementService {
 
     private double tareWeight;
 
-    public WeightMeasurementServiceImpl(@Value("${catfeeder.hardware.hx711.pins.DT}") String dataPinName,
-                                        @Value("${catfeeder.hardware.hx711.pins.CLCK}") String clockPinName,
-                                        @Value("${catfeeder.hardware.hx711.gain}") Gain gain,
-                                        @Value("${catfeeder.hardware.hx711.defaultReadsCount}") int defaultReadsCount,
-                                        @Value("${catfeeder.hardware.hx711.defaultCalibrationFactor}") int defaultCalibrationFactor) {
+    /**
+     * Базовый конструктор
+     * @param dataPinName номер gpio пина для считывания входных данных
+     * @param clockPinName номер gpio пина для тактирования (управления передачей) данных
+     * @param gain коэффициент усиления (см. datasheet к HX711)
+     * @param defaultReadsCount количество совершаемых замеров для получения итогового среднего значения веса
+     * @param defaultCalibrationFactor калибровочное значение используемое в расчётах итогового веса (подбирается опытным путём, уникально для каждого тензодатчика)
+     */
+    public HX711WeightMeasurementService(@Value("${catfeeder.hardware.hx711.pins.DT}") String dataPinName,
+                                         @Value("${catfeeder.hardware.hx711.pins.CLCK}") String clockPinName,
+                                         @Value("${catfeeder.hardware.hx711.gain}") Gain gain,
+                                         @Value("${catfeeder.hardware.hx711.defaultReadsCount}") int defaultReadsCount,
+                                         @Value("${catfeeder.hardware.hx711.defaultCalibrationFactor}") int defaultCalibrationFactor) {
 
         GpioController gpio = GpioFactory.getInstance();
         dataPin = gpio.provisionDigitalInputPin(RaspiPin.getPinByName(dataPinName));
@@ -102,34 +111,51 @@ public class WeightMeasurementServiceImpl implements WeightMeasurementService {
                 .average()
                 .getAsDouble();
 
-        log.info("Result value is: " + averageValue + "\n");
+        log.info("Итоговое значение веса: " + averageValue + "\n");
 
         return averageValue;
     }
 
     private long measure() {
+        wakeUpAndWaitModuleForReady();
+        return readRawBitsValue() ^ 0x800000;
+    }
+
+    private void wakeUpAndWaitModuleForReady() {
         clockPin.low();
 
+        //FIXME добавить таймаут обращения к модулю, на случай обрыва связи и вывода его из строя
         while (!moduleReady()) {
             sleepMicro(1);
         }
+    }
 
-        long count = 0;
+    private boolean moduleReady() {
+        return dataPin.isLow();
+    }
 
-        for (int i = 0; i < 24; i++) {
+    private long readRawBitsValue() {
+        long result = 0;
+
+        for (int i = 0; i < CLOCK_PULSE_COUNT_FOR_READ_VALUE; i++) {
             clockPin.high();
             sleepMicro(1);
 
-            count = count << 1;
+            result = result << 1;
 
             clockPin.low();
             sleepMicro(1);
 
             if (dataPin.isHigh()) {
-                count++;
+                result++;
             }
         }
 
+        setGainForNextMeasure();
+        return result;
+    }
+
+    private void setGainForNextMeasure() {
         switch (gain) {
             case GAIN_64:
                 clock();
@@ -138,13 +164,6 @@ public class WeightMeasurementServiceImpl implements WeightMeasurementService {
             case GAIN_128:
                 clock();
         }
-
-        count = count ^ 0x800000;
-        return count;
-    }
-
-    private boolean moduleReady() {
-        return dataPin.isLow();
     }
 
     private void clock() {
