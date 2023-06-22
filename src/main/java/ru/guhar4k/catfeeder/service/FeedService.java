@@ -1,4 +1,4 @@
-package ru.guhar4k.catfeeder.service.feeder;
+package ru.guhar4k.catfeeder.service;
 
 import ru.guhar4k.catfeeder.model.dto.FeedResultDTO;
 

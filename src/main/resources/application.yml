@@ -6,22 +6,23 @@ spring:
 server:
   port: 80
 
+hardware:
+  gpio-platform: pi4j
+  modules:
+    motor-drivers:
+      - driver-name: Feeder
+        pins:
+          en: 2
+          dir: 1
+          step: 0
+    scales:
+      - scales-name: FeederScales
+#        calibration-factor: 1123
+        calibration-factor: 1119
+        timeout-in-millis: 3000
+        gain: gain_128
+        pins:
+          clock: 7
+          data: 5
 catfeeder:
-  hardware:
-    hx711:
-      pins:
-        DT: GPIO 8
-        CLCK: GPIO 9
-      gain: GAIN_128
-      defaultReadsCount: 10
-      defaultCalibrationFactor: 1123
-    feederStepper:
-      sleepBetweenSteps: 300
-      stepsPerRevolution: 200
-      microSteps: 8
-      pins:
-        EN: GPIO 3
-        DIR: GPIO 0
-        STEP: GPIO 2
-    encoder:
-      pin: GPIO 12
+  average-weight-measures: 3

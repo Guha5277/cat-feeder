@@ -1,16 +1,12 @@
-package ru.guhar4k.catfeeder.service.motor;
+package ru.guhar4k.catfeeder.service;
 
-import ru.guhar4k.catfeeder.model.enumeration.Direction;
+
+import ru.guhar4k.gpio.core.property.Direction;
 
 /**
  * Сервис работы с шаговым двигателем
  */
 public interface MotorService {
-
-    /**
-     * Возвращает наименование (назначение) двигателя
-     */
-    String getName();
 
     /**
      * Вращение с указанием количества оборотов

@@ -16,10 +16,4 @@ public class WeightDTO {
 
     @Schema(name = "measuresCount", description = "Количество итераций измерения")
     private int measuresCount;
-
-    @Schema(name = "scaleFactor", description = "Калибровочное значение")
-    private int scaleFactor;
-
-    @Schema(name = "tareWeight", description = "Вес тары")
-    private double tareWeight;
 }
